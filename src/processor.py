@@ -7,7 +7,7 @@ from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from .config import Config
 
-from paddleocr import PaddleOCR
+from rapidocr_onnxruntime import RapidOCR
 import logging
 import numpy as np
 
@@ -40,8 +40,8 @@ class PDFProcessor:
             # Initialize PaddleOCR
             # Disable angle classifier to avoid "unexpected keyword argument 'cls'" error
             # NotebookLM slides are usually horizontal anyway
-            print("Initializing PaddleOCR...")
-            self.ocr = PaddleOCR(use_angle_cls=False, lang='ch', enable_mkldnn=False)
+            print("Initializing RapidOCR...")
+            self.ocr = RapidOCR()
 
     def get_page_thumbnails(self, dpi=72):
         """
@@ -139,7 +139,7 @@ class PDFProcessor:
             # Use 150 DPI (down from 200) to improve speed while maintaining acceptable accuracy
             pix = page.get_pixmap(dpi=150)
             
-            # Convert to numpy array for PaddleOCR
+            # Convert to numpy array for RapidOCR
             # pix.samples is bytes
             img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
             
@@ -149,128 +149,29 @@ class PDFProcessor:
             elif pix.n == 3:
                 pass # Already RGB
             
-            # Run OCR
-            # Removed cls argument completely as it causes issues in some versions
-            result = self.ocr.ocr(img)
+            # Run OCR with RapidOCR
+            result, elapse = self.ocr(img)
             
             if result:
-                # Handle PaddleX OCRResult object (which behaves like a dict or has attributes)
-                # Structure: result[0] is the object.
-                # Keys/Attributes: 'rec_texts', 'dt_polys', 'rec_scores'
+                scale_x = page.rect.width / pix.width
+                scale_y = page.rect.height / pix.height
                 
-                first_item = result[0]
-                rec_texts = None
-                dt_polys = None
-                rec_scores = None
-                
-                # 1. Try accessing as dictionary/subscriptable
-                try:
-                    rec_texts = first_item['rec_texts']
-                    dt_polys = first_item['dt_polys']
-                    rec_scores = first_item['rec_scores']
-                except (TypeError, KeyError, IndexError):
-                    # 2. Try accessing as attributes
-                    try:
-                        rec_texts = getattr(first_item, 'rec_texts', None)
-                        dt_polys = getattr(first_item, 'dt_polys', None)
-                        rec_scores = getattr(first_item, 'rec_scores', None)
-                    except AttributeError:
-                        pass
-                
-                # If we successfully extracted data from OCRResult
-                if rec_texts is not None and dt_polys is not None:
-                    scale_x = page.rect.width / pix.width
-                    scale_y = page.rect.height / pix.height
+                for item in result:
+                    # item structure: [dt_box, text, score]
+                    # dt_box: [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+                    dt_box, text, score = item
                     
-                    for i, text in enumerate(rec_texts):
-                        if not text: continue
-                        
-                        score = rec_scores[i] if rec_scores and i < len(rec_scores) else 1.0
-                        if score < 0.5: continue
-                        
-                        poly = dt_polys[i]
-                        # poly is likely a numpy array or list of points [[x,y], [x,y], [x,y], [x,y]]
-                        if isinstance(poly, np.ndarray):
-                            coords = poly.tolist()
-                        else:
-                            coords = poly
-                            
-                        # Calculate bbox from coords
-                        xs = [p[0] for p in coords]
-                        ys = [p[1] for p in coords]
-                        x0 = min(xs) * scale_x
-                        y0 = min(ys) * scale_y
-                        x1 = max(xs) * scale_x
-                        y1 = max(ys) * scale_y
-                        
-                        # Estimate font size
-                        size = (y1 - y0) * 0.8
-                        
-                        # Sample color from image
-                        # Convert bbox to pixel coordinates for sampling
-                        ix0 = int(x0 / scale_x)
-                        iy0 = int(y0 / scale_y)
-                        ix1 = int(x1 / scale_x)
-                        iy1 = int(y1 / scale_y)
-                        
-                        # Ensure bounds
-                        h_img, w_img, _ = img.shape
-                        ix0 = max(0, ix0)
-                        iy0 = max(0, iy0)
-                        ix1 = min(w_img, ix1)
-                        iy1 = min(h_img, iy1)
-                        
-                        if ix1 > ix0 and iy1 > iy0:
-                            # Crop region
-                            region = img[iy0:iy1, ix0:ix1]
-                            # Get average color (simple mean)
-                            avg_color = region.mean(axis=(0, 1)).astype(int) # RGB
-                            hex_color = "#{:02x}{:02x}{:02x}".format(avg_color[0], avg_color[1], avg_color[2])
-                        else:
-                            hex_color = "#000000" # Fallback to black
-
-                        text_instances.append({
-                            "text": text,
-                            "bbox": (x0, y0, x1, y1),
-                            "size": size,
-                            "color": hex_color,
-                            "origin": (x0, y1)
-                        })
+                    if score < 0.5: continue
                     
-                    return text_instances
-
-                # Fallback to standard list-of-lists parsing (for older PaddleOCR versions)
-                lines = []
-                if isinstance(result[0], list):
-                    if len(result[0]) > 0 and isinstance(result[0][0], list):
-                        lines = result[0]
-                    else:
-                        lines = result
-                
-                for line in lines:
-                    # ... (existing list parsing logic) ...
-                    coords = line[0]
-                    content = line[1]
-                    
-                    if isinstance(content, (list, tuple)):
-                        text = content[0]
-                        confidence = content[1]
-                    elif isinstance(content, str):
-                        text = content
-                        confidence = 1.0
-                    else:
-                        continue
-                        
-                    if isinstance(confidence, (int, float)) and confidence < 0.5: continue
-                    
-                    # Calculate bbox
-                    xs = [p[0] for p in coords]
-                    ys = [p[1] for p in coords]
+                    # Calculate bbox from dt_box
+                    xs = [p[0] for p in dt_box]
+                    ys = [p[1] for p in dt_box]
                     x0 = min(xs) * scale_x
                     y0 = min(ys) * scale_y
                     x1 = max(xs) * scale_x
                     y1 = max(ys) * scale_y
                     
+                    # Estimate font size
                     size = (y1 - y0) * 0.8
                     
                     # Sample color from image
@@ -295,7 +196,7 @@ class PDFProcessor:
                         hex_color = "#{:02x}{:02x}{:02x}".format(avg_color[0], avg_color[1], avg_color[2])
                     else:
                         hex_color = "#000000" # Fallback to black
-                    
+
                     text_instances.append({
                         "text": text,
                         "bbox": (x0, y0, x1, y1),
