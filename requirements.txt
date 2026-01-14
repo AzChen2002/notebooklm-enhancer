@@ -1,3 +1,4 @@
+--extra-index-url https://mirror.baidu.com/pypi/simple
 pymupdf
 pdfplumber
 python-pptx
