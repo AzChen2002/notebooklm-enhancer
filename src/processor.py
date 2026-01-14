@@ -41,7 +41,7 @@ class PDFProcessor:
             # Disable angle classifier to avoid "unexpected keyword argument 'cls'" error
             # NotebookLM slides are usually horizontal anyway
             print("Initializing PaddleOCR...")
-            self.ocr = PaddleOCR(use_angle_cls=False, lang='ch')
+            self.ocr = PaddleOCR(use_angle_cls=False, lang='ch', enable_mkldnn=False)
 
     def get_page_thumbnails(self, dpi=72):
         """
