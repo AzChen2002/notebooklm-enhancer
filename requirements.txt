@@ -1,0 +1,10 @@
+pymupdf
+pdfplumber
+python-pptx
+Pillow
+reportlab
+streamlit
+paddlepaddle
+paddleocr
+protobuf==3.20.2
+opencv-python-headless
