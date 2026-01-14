@@ -18,6 +18,11 @@ class PDFProcessor:
     def __init__(self, input_path, output_dir=None, font_path=None):
         self.input_path = input_path
         self.output_dir = output_dir or Config.OUTPUT_DIR
+        
+        # Ensure output directory exists
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir, exist_ok=True)
+
         self.font_path = font_path or Config.DEFAULT_FONT_PATH
         
         if not os.path.exists(self.font_path):
