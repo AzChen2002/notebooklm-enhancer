@@ -186,14 +186,14 @@ if uploaded_file is not None:
         cols = st.columns(4)
         for i, (page_num, img) in enumerate(st.session_state.thumbnails):
             with cols[i % 4]:
-                st.image(img, caption=f"Page {page_num}", use_container_width=True)
+                st.image(img, caption=f"Page {page_num}", width="stretch")
 
     # Action Buttons
     # Create tabs for different functions
     tab_enhance, tab_edit, tab_pptx = st.tabs(["✨ 增強 PDF (Enhance)", "✏️ 編輯文字 (Edit Text)", "📊 轉為 PPTX"])
 
     with tab_enhance:
-        if st.button("🚀 生成增強版 PDF", type="primary", use_container_width=True):
+        if st.button("🚀 生成增強版 PDF", type="primary", width="stretch"):
             if not uploaded_file:
                 st.warning("請先上傳 PDF 檔案。")
             else:
@@ -257,7 +257,7 @@ if uploaded_file is not None:
             cols = st.columns(4)
             for i, (page_num, img) in enumerate(st.session_state.thumbnails):
                 with cols[i % 4]:
-                    st.image(img, use_container_width=True)
+                    st.image(img, width="stretch")
                     # Use a unique key for each checkbox
                     # Initialize key in session state if not present (default True)
                     key = f"pg_select_{page_num}"
@@ -309,7 +309,7 @@ if uploaded_file is not None:
                     "origin": None # Hide origin
                 },
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
                 height=500
             )
             
@@ -328,7 +328,7 @@ if uploaded_file is not None:
             with col_btn:
                 st.write("") # Spacer
                 st.write("") # Spacer
-                generate_clicked = st.button("💾 生成編輯後的 PDF", type="primary", use_container_width=True)
+                generate_clicked = st.button("💾 生成編輯後的 PDF", type="primary", width="stretch")
 
             if generate_clicked:
                 with st.spinner("正在生成 PDF (Processing)..."):
@@ -376,7 +376,7 @@ if uploaded_file is not None:
             help="若 PDF 為純圖片或掃描檔，請勾選此項。若為一般 PDF (已有文字)，請取消勾選以大幅提升轉換速度。"
         )
         
-        if st.button("📊 轉為 PPTX", use_container_width=True):
+        if st.button("📊 轉為 PPTX", width="stretch"):
             progress_bar = st.progress(0)
             status_text = st.empty()
             
