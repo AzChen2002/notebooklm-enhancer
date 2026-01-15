@@ -14,15 +14,104 @@ st.set_page_config(
 )
 
 # Title and Description
-st.title("📄 NotebookLM Enhancer")
+# Custom CSS for Hero Section
 st.markdown("""
-優化 NotebookLM 產生的 PDF。
-- **清晰化**：使用高品質字型重新渲染文字。
-- **可編輯**：轉換為 PPTX，文字可直接編輯。
-- **去浮水印**：自動遮蓋右下角浮水印。
-""")
+<style>
+    .hero-container {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: -webkit-linear-gradient(45deg, #FF4B4B, #FF914D);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 2rem;
+    }
+    .feature-card {
+        background-color: #f0f2f6;
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        height: 100%;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    .feature-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    .feature-desc {
+        font-size: 0.9rem;
+        color: #555;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Main Area - File Uploader
+uploaded_file = st.file_uploader("上傳 NotebookLM PDF", type=["pdf"])
+
+# Show Hero Section only if no file is uploaded
+if uploaded_file is None:
+    st.markdown("""
+        <div class="hero-container">
+            <div class="hero-title">NotebookLM Enhancer</div>
+            <div class="hero-subtitle">將您的 AI 簡報升級為專業、清晰、可編輯的 PPTX</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <div class="feature-title">畫質增強 (Enhance)</div>
+                <div class="feature-desc">使用 Noto Sans TC 字型重新渲染，將模糊的 PDF 轉為高解析度影像。</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+            <div class="feature-card">
+                <div class="feature-icon">✏️</div>
+                <div class="feature-title">完全可編輯 (Editable)</div>
+                <div class="feature-desc">轉換為 PPTX 格式，文字不再是圖片，而是真正的可編輯文字方塊。</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+            <div class="feature-card">
+                <div class="feature-icon">💧</div>
+                <div class="feature-title">智慧去浮水印 (Clean)</div>
+                <div class="feature-desc">自動偵測並移除右下角浮水印，還原乾淨的版面設計。</div>
+            </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    st.info("👆 請在上方拖曳或選擇您的 PDF 檔案以開始使用。")
 
 # Sidebar - Settings
+# Logo
+logo_path = os.path.join(os.path.dirname(__file__), "assets", "sidebar_logo.png")
+if os.path.exists(logo_path):
+    st.sidebar.image(logo_path, use_container_width=True)
+
 st.sidebar.header("⚙️ 設定 (Settings)")
 
 # Font Selection (Disabled for now as per user request)
@@ -91,8 +180,8 @@ if remove_watermark:
 else:
     wm_settings = {"text_bg": text_bg}
 
-# Main Area - File Uploader
-uploaded_file = st.file_uploader("上傳 NotebookLM PDF", type=["pdf"])
+# Main Area - File Uploader (Moved to top)
+# uploaded_file = st.file_uploader("上傳 NotebookLM PDF", type=["pdf"])
 
 if uploaded_file is not None:
     # Save uploaded file to temp
