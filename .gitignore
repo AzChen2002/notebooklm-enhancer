@@ -44,7 +44,7 @@ temp/
 *.pptx
 *.jpg
 *.png
-!src/assets/*.png  # Keep assets if any
+!assets/*.png
 
 # OS
 .DS_Store
