@@ -4,6 +4,7 @@ import tempfile
 import traceback
 from src.processor import PDFProcessor
 from src.config import Config
+from src.tracker import UsageTracker
 from PIL import Image
 
 # Page Config
@@ -63,6 +64,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main Area - File Uploader
+# User Identification
+st.markdown("### 👤 使用者登入 (User Login)")
+user_name = st.text_input("請輸入您的姓名/部門 (Your Name/Dept)", placeholder="例如：王小明 (研發部)")
+
+if not user_name:
+    st.info("👋 請先輸入姓名以開始使用工具。")
+    st.stop()
+
+# Initialize Tracker
+if "tracker" not in st.session_state:
+    st.session_state.tracker = UsageTracker()
+tracker = st.session_state.tracker
+
 uploaded_file = st.file_uploader("上傳 NotebookLM PDF", type=["pdf"])
 
 # Show Hero Section only if no file is uploaded
@@ -190,6 +204,11 @@ if uploaded_file is not None:
         tmp_path = tmp_file.name
 
     st.success(f"檔案已上傳: {uploaded_file.name}")
+    
+    # Log Upload
+    if "last_uploaded" not in st.session_state or st.session_state.last_uploaded != uploaded_file.name:
+        tracker.log_action(user_name, "Upload", uploaded_file.name)
+        st.session_state.last_uploaded = uploaded_file.name
 
     # Initialize Processor
     processor = PDFProcessor(tmp_path, font_path=selected_font_path)
@@ -311,12 +330,17 @@ if uploaded_file is not None:
                         pages_to_remove=pages_to_remove
                     )
                     st.success("PDF 生成成功！")
+                    
+                    def log_pdf_download():
+                        tracker.log_action(user_name, "Download PDF", f"{processor.filename}_enhanced.pdf")
+                        
                     with open(output_path, "rb") as f:
                         st.download_button(
                             label="📥 下載增強版 PDF",
                             data=f,
                             file_name=f"{processor.filename}_enhanced.pdf",
-                            mime="application/pdf"
+                            mime="application/pdf",
+                            on_click=log_pdf_download
                         )
                 except Exception as e:
                     st.error(f"發生錯誤: {e}")
@@ -447,13 +471,18 @@ if uploaded_file is not None:
                             bg_mode=selected_mode
                         )
                         st.success("編輯完成！")
+                        
+                        def log_edited_pdf_download():
+                            tracker.log_action(user_name, "Download Edited PDF", f"{processor.filename}_edited.pdf")
+
                         with open(output_path, "rb") as f:
                             st.download_button(
                                 label="📥 下載編輯後的 PDF",
                                 data=f,
                                 file_name=f"{processor.filename}_edited.pdf",
                                 mime="application/pdf",
-                                type="primary"
+                                type="primary",
+                                on_click=log_edited_pdf_download
                             )
                     except Exception as e:
                         st.error(f"發生錯誤: {e}")
@@ -499,12 +528,17 @@ if uploaded_file is not None:
                     pages_to_remove=pages_to_remove
                 )
                 st.success("PPTX 轉換成功！")
+                
+                def log_pptx_download():
+                    tracker.log_action(user_name, "Download PPTX", f"{processor.filename}.pptx")
+
                 with open(pptx_path, "rb") as f:
                     st.download_button(
                         label="📥 下載 PPTX",
                         data=f,
                         file_name=f"{processor.filename}.pptx",
-                        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                        on_click=log_pptx_download
                     )
             except Exception as e:
                 st.error(f"發生錯誤: {e}")
