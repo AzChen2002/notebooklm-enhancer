@@ -8,3 +8,4 @@ rapidocr_onnxruntime
 protobuf==3.20.2
 opencv-python-headless==4.8.0.74
 numpy<2.0.0
+opencc-python-reimplemented

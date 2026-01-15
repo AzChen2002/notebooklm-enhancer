@@ -10,6 +10,7 @@ from .config import Config
 from rapidocr_onnxruntime import RapidOCR
 import logging
 import numpy as np
+from opencc import OpenCC
 
 # Suppress PaddleOCR logging
 logging.getLogger("ppocr").setLevel(logging.ERROR)
@@ -41,7 +42,9 @@ class PDFProcessor:
             # Disable angle classifier to avoid "unexpected keyword argument 'cls'" error
             # NotebookLM slides are usually horizontal anyway
             print("Initializing RapidOCR...")
+            print("Initializing RapidOCR...")
             self.ocr = RapidOCR()
+            self.cc = OpenCC('s2t') # Simplified to Traditional
 
     def get_page_thumbnails(self, dpi=72):
         """
@@ -160,6 +163,9 @@ class PDFProcessor:
                     # item structure: [dt_box, text, score]
                     # dt_box: [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
                     dt_box, text, score = item
+                    
+                    # Convert Simplified to Traditional Chinese
+                    text = self.cc.convert(text)
                     
                     if score < 0.5: continue
                     
