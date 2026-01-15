@@ -925,14 +925,29 @@ class PDFProcessor:
                         render_mode = 3 # Invisible
                         text_content = item["original_text"] # Use original text
                     
+                    # Font handling for insert_text
+                    insert_font_args = {"fontname": "helv", "fontsize": item["size"]}
+                    
+                    if use_font_path and os.path.exists(use_font_path):
+                        insert_font_args["fontname"] = "custom_font"
+                        insert_font_args["fontfile"] = use_font_path
+                    else:
+                        # Try to find Noto Sans CJK on Linux/Cloud
+                        noto_path = "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"
+                        if os.path.exists(noto_path):
+                             insert_font_args["fontname"] = "noto_cjk"
+                             insert_font_args["fontfile"] = noto_path
+                        else:
+                            # Fallback to helv, no fontfile arg needed
+                            pass
+
                     # Insert text
                     new_page.insert_text(
                         item["origin"],
                         text_content,
-                        fontname=fontname,
-                        fontsize=item["size"],
                         color=(r, g, b),
-                        render_mode=render_mode
+                        render_mode=render_mode,
+                        **insert_font_args
                     )
             
             # Cleanup
