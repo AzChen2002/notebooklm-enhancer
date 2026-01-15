@@ -9,7 +9,7 @@ class Config:
 
     # Font settings
     # Default to Microsoft JhengHei if available, otherwise fallback
-    DEFAULT_FONT_NAME = "msjh.ttc" 
+    DEFAULT_FONT_NAME = "NotoSansTC-Regular.otf" 
     DEFAULT_FONT_PATH = os.path.join(FONTS_DIR, DEFAULT_FONT_NAME)
     
     # Fallback font if the primary one isn't found (e.g., system font)
