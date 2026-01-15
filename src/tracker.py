@@ -3,6 +3,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import traceback
+import pytz
 
 class UsageTracker:
     def __init__(self):
@@ -49,7 +50,13 @@ class UsageTracker:
             return
 
         try:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Get current time in UTC
+            utc_now = datetime.now(pytz.utc)
+            # Convert to Taiwan time (Asia/Taipei)
+            tw_tz = pytz.timezone('Asia/Taipei')
+            tw_now = utc_now.astimezone(tw_tz)
+            
+            timestamp = tw_now.strftime("%Y-%m-%d %H:%M:%S")
             row = [timestamp, user_name, action, filename, details]
             self.sheet.append_row(row)
             print(f"UsageTracker: Logged action - {action} by {user_name}")
