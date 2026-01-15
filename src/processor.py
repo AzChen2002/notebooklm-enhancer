@@ -164,10 +164,26 @@ class PDFProcessor:
                     # dt_box: [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
                     dt_box, text, score = item
                     
-                    # Convert Simplified to Traditional Chinese
-                    text = self.cc.convert(text)
+                    # 1. Protect ignored characters (e.g., "台")
+                    # Replace them with a unique placeholder that OpenCC won't touch
+                    protected_text = text
+                    placeholders = {}
+                    for i, char in enumerate(Config.OPENCC_IGNORE_CHARS):
+                        placeholder = f"__IGNORE_{i}__"
+                        if char in protected_text:
+                            protected_text = protected_text.replace(char, placeholder)
+                            placeholders[placeholder] = char
                     
-                    # Apply Custom Corrections (e.g., 臺 -> 台)
+                    # 2. Convert Simplified to Traditional Chinese
+                    converted_text = self.cc.convert(protected_text)
+                    
+                    # 3. Restore ignored characters
+                    for placeholder, original_char in placeholders.items():
+                        converted_text = converted_text.replace(placeholder, original_char)
+                        
+                    text = converted_text
+                    
+                    # 4. Apply Custom Corrections (e.g., 臺 -> 台)
                     for wrong, correct in Config.TEXT_CORRECTIONS.items():
                         text = text.replace(wrong, correct)
                     
