@@ -167,6 +167,10 @@ class PDFProcessor:
                     # Convert Simplified to Traditional Chinese
                     text = self.cc.convert(text)
                     
+                    # Apply Custom Corrections (e.g., 臺 -> 台)
+                    for wrong, correct in Config.TEXT_CORRECTIONS.items():
+                        text = text.replace(wrong, correct)
+                    
                     if score < 0.5: continue
                     
                     # Calculate bbox from dt_box

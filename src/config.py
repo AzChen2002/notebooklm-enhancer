@@ -23,4 +23,15 @@ class Config:
     # Better to use a flexible approach or fixed size from bottom-right corner.
     # For now, let's assume a rectangular area in the bottom right.
     # (x_start_percent, y_start_percent, x_end_percent, y_end_percent)
-    WATERMARK_AREA_RATIO = (0.8, 0.9, 1.0, 1.0) 
+    # OpenCC 轉換後的修正清單
+    # 格式： "OpenCC產出的詞": "您想要的詞"
+    TEXT_CORRECTIONS = {
+        "臺積電": "台積電",
+        "臺達電": "台達電",
+        "臺北": "台北",
+        "臺灣": "台灣",
+        "臺湾": "台灣",
+        "臺中": "台中",
+        "臺南": "台南",
+        "平臺": "平台"
+    } 
