@@ -184,9 +184,18 @@ if uploaded_file is not None:
         
         # Grid Layout for Thumbnails
         cols = st.columns(4)
+        pages_to_remove = []
         for i, (page_num, img) in enumerate(st.session_state.thumbnails):
             with cols[i % 4]:
                 st.image(img, caption=f"Page {page_num}", width="stretch")
+                # Checkbox for deletion
+                # Use a unique key for each checkbox
+                del_key = f"del_page_{page_num}"
+                if st.checkbox("🗑️ 刪除 (Delete)", key=del_key):
+                    pages_to_remove.append(page_num - 1) # Store 0-based index
+
+        if pages_to_remove:
+            st.warning(f"⚠️ 將刪除 {len(pages_to_remove)} 頁: {[p+1 for p in pages_to_remove]}")
 
     # Action Buttons
     # Create tabs for different functions
@@ -209,7 +218,8 @@ if uploaded_file is not None:
                         wm_settings=wm_settings, 
                         debug_mode=debug_mode, 
                         enable_ocr=False,
-                        progress_callback=update_progress
+                        progress_callback=update_progress,
+                        pages_to_remove=pages_to_remove
                     )
                     st.success("PDF 生成成功！")
                     with open(output_path, "rb") as f:
@@ -396,7 +406,8 @@ if uploaded_file is not None:
                     wm_settings=wm_settings, 
                     text_mode=selected_mode,
                     enable_ocr=enable_ocr_pptx,
-                    progress_callback=update_progress
+                    progress_callback=update_progress,
+                    pages_to_remove=pages_to_remove
                 )
                 st.success("PPTX 轉換成功！")
                 with open(pptx_path, "rb") as f:
