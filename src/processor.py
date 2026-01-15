@@ -256,9 +256,10 @@ class PDFProcessor:
         
         return img
 
-    def render_new_pdf(self, wm_settings=None, debug_mode=False, enable_ocr=False, progress_callback=None):
+    def render_new_pdf(self, wm_settings=None, debug_mode=False, enable_ocr=False, progress_callback=None, pages_to_remove=None):
         """
         Creates a new PDF with high-quality text and original background.
+        pages_to_remove: List of 0-based page numbers to skip.
         """
         output_path = os.path.join(self.output_dir, f"{self.filename}_enhanced.pdf")
         new_doc = fitz.open()
@@ -267,12 +268,18 @@ class PDFProcessor:
         try:
             test_page = new_doc.new_page()
             test_page.insert_font(fontname="test_font", fontfile=self.font_path)
-            new_doc.delete_page(0)
         except Exception as e:
             print(f"Error loading font {self.font_path}: {e}")
+        finally:
+            # Ensure the test page is removed regardless of success or failure
+            if len(new_doc) > 0:
+                new_doc.delete_page(0)
         
         total_pages = len(self.doc)
         for page_num in range(total_pages):
+            if pages_to_remove and page_num in pages_to_remove:
+                continue
+
             if progress_callback:
                 progress_callback(page_num / total_pages, f"Processing page {page_num + 1}/{total_pages}")
 
@@ -357,10 +364,11 @@ class PDFProcessor:
         print(f"PDF saved to: {output_path}")
         return output_path
 
-    def convert_to_pptx(self, wm_settings=None, text_mode="re-render", enable_ocr=False, progress_callback=None):
+    def convert_to_pptx(self, wm_settings=None, text_mode="re-render", enable_ocr=False, progress_callback=None, pages_to_remove=None):
         """
         Converts the PDF to a PPTX file with editable text.
         text_mode: 're-render' (clean bg + new text) or 'overlay' (original bg + invisible text)
+        pages_to_remove: List of 0-based page numbers to skip.
         """
         output_path = os.path.join(self.output_dir, f"{self.filename}.pptx")
         prs = Presentation()
@@ -373,6 +381,9 @@ class PDFProcessor:
         
         total_pages = len(self.doc)
         for page_num in range(total_pages):
+            if pages_to_remove and page_num in pages_to_remove:
+                continue
+
             if progress_callback:
                 progress_callback(page_num / total_pages, f"Converting page {page_num + 1}/{total_pages}")
 
